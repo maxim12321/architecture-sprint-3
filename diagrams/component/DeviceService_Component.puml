@@ -1,0 +1,27 @@
+@startuml DeviceService_Component
+title Device Service Component Diagram
+
+!include ../c4-template/C4_Component.puml
+
+Container(ApiGateway, "API Gateway", "Java, Spring", "Занимается авторизацией пользователей, обрабатывает входящие API-запросы")
+
+Container_Boundary(DeviceServiceContainer, "Device Service") {
+  Component(Api, "API", "", "Обрабатывает входящие запросы о ручном изменении состояния устройств. Возвращает текущее состояние устройств.")
+  Component(StateUpdater, "State Updater", "", "Обрабатывает события из очереди о необходимости изменить состояние устройства, выполняя запрос в соответствующее устройство умного дома.")
+  Component(DeviceManager, "Device Manager", "", "Поддерживает текущее состояние для умных устройств из входящих запросов и событий в очереди.")
+}
+
+System_Ext(devices, "Устройства умного дома", "Устройства, позволяющие управлять умным домом (реле, камеры, техника, ...)")
+ContainerDb(DeviceDatabase, "Device Database", "MongoDB", "Хранит текущее состояние умных устройств")
+ContainerQueue(DeviceStateQueue, "Device State Queue", "Kafka", "Содержит события об изменении состояния умных устройств")
+
+Rel_D(ApiGateway, Api, "Отправляет события с устройств\nПолучает текущее состояние устройств", "HTTPS/JSON")
+Rel_D(Api, DeviceManager, "Запрашивает текущее состояние устройств\n Изменяет состояния устройств")
+
+Rel_R(StateUpdater, devices, "Отправляет запросы изменения состояния", "HTTPS/JSON")
+Rel_D(StateUpdater, DeviceStateQueue, "Обрабатывает сообщения о необходимости изменить состояние устройства", "Kafka")
+
+Rel_D(DeviceManager, DeviceDatabase, "Получает и обновляет текущее состояние устройства", "JDBC")
+Rel_D(DeviceManager, DeviceStateQueue, "Публикует события об изменении состояния устройства", "Kafka")
+
+@enduml

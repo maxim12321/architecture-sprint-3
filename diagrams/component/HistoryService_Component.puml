@@ -1,0 +1,31 @@
+@startuml HistoryService_Component
+title History Service Component Diagram
+
+!include ../c4-template/C4_Component.puml
+
+Container(ApiGateway, "API Gateway", "Java, Spring", "Занимается авторизацией пользователей, обрабатывает входящие API-запросы")
+
+Container_Boundary(HistoryServiceContainer, "History Service") {
+    Component(Api, "API", "", "Обрабатывает входящие запросы о сборе истории состояний датчиков и устройств.")
+    Component(HistoryFetcher, "History Fetcher", "", "Собирает историю состояний по определенному датчику или устройству с возможностью фильтрации и т.д.")
+    Component(SensorEventProcessor, "Sensor Event Processor", "", "Обрабатывает сырые события с датчиков и сохраняет историю состояний.")
+    Component(DeviceEventProcessor, "Device Event Processor", "", "Обрабатывает события об изменении данных с умных устройств и сохраняет историю состояний.")
+}
+
+ContainerDb(HistoryDatabase, "History Database", "MongoDB", "Хранит события об изменении состояния датчиков и умных устройств")
+ContainerQueue(SensorDataQueue, "Sensor Data Queue", "Kafka", "Содержит <<сырые>> события с датчиков")
+ContainerQueue(DeviceStateQueue, "Device State Queue", "Kafka", "Содержит события об изменении состояния умных устройств")
+
+Rel_D(ApiGateway, Api, "Получает журнал состояний датчиков и устройств")
+Rel_D(Api, HistoryFetcher, "Запрашивает исторические данные по датчикам и устройствам")
+Rel_D(HistoryFetcher, HistoryDatabase, "Читает данные об истории состояний")
+
+Rel_D(SensorEventProcessor, SensorDataQueue, "Получает все события из")
+Rel_D(SensorEventProcessor, HistoryDatabase, "Сохраняет данные в")
+Rel_D(DeviceEventProcessor, DeviceStateQueue, "Получает все события из")
+Rel_D(DeviceEventProcessor, HistoryDatabase, "Сохраняет данные в")
+
+Lay_R(SensorEventProcessor, HistoryFetcher)
+Lay_R(HistoryFetcher, DeviceEventProcessor)
+
+@enduml

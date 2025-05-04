@@ -1,0 +1,30 @@
+@startuml HouseService_Component
+title House Service Component Diagram
+
+!include ../c4-template/C4_Component.puml
+
+Container(ApiGateway, "API Gateway", "Java, Spring", "Занимается авторизацией пользователей, обрабатывает входящие API-запросы")
+Container(TriggerService, "Trigger Service", "Java, Spring", "Обрабатывает добавление новых триггеров (их программирование), отвечает за их срабатывание")
+
+Container_Boundary(HouseServiceContainer, "House Service") {
+  Component(Api, "API", "", "Обрабатывает входящие запросы о добавлении новых датчиков и устройств, а также настройке триггеров. Возвращает общее состояние дома со всеми его датчиками и устройствами.")
+  Component(SensorManager, "Sensor Manager", "", "Регистрирует новые датчики, получает список всех датчиков в доме.")
+  Component(DeviceManager, "Device Manager", "", "Регистрирует новые умные устройства, получает список всех устройств в доме.")
+  Component(HouseManager, "House Manager", "", "Обновляет информацию об умном доме, список его датчиков и устройств, а также собирает общую информацию о состоянии устройств в доме.")
+}
+
+ContainerDb(MainDatabase, "Main Database", "PostgreSQL", "Хранит информацию об умных домах пользователей, а также список подключенных к ним датчиков, устройств и настроенных триггеров")
+
+Rel_D(ApiGateway, Api, "Сообщает о подключении новых устройств/датчиков/триггеров\n Запрашивает информацию о состоянии дома, его датчиках и устройствах", "HTTPS/JSON")
+
+Rel_D(Api, SensorManager, "Добавляет новые датчики,\n запрашивает список датчиков")
+Rel_D(Api, DeviceManager, "Добавляет новые устройства,\n запрашивает список устройств")
+Rel_D(Api, HouseManager, "Изменяет информацию о доме,\n привязывает к нему новые устройства и датчики")
+
+Rel_R(Api, TriggerService, "Добавляет новые триггеры,\n запрашивает список существующих", "gRPC")
+
+Rel_D(SensorManager, MainDatabase, "Сохраняет и получает информацию о датчиках", "JDBC")
+Rel_D(DeviceManager, MainDatabase, "Сохраняет и получает информацию об устройствах", "JDBC")
+Rel_D(HouseManager, MainDatabase, "Сохраняет и получает информацию о доме", "JDBC")
+
+@enduml

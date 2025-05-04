@@ -1,0 +1,22 @@
+@startuml SensorService_Component
+title Sensor Service Component Diagram
+
+!include ../c4-template/C4_Component.puml
+
+Container(ApiGateway, "API Gateway", "Java, Spring", "Занимается авторизацией пользователей, обрабатывает входящие API-запросы")
+
+Container_Boundary(SensorServiceContainer, "Sensor Service") {
+  Component(Api, "API", "", "Обрабатывает входящие запросы от датчиков. Возвращает текущее состояние датчиков.")
+  Component(SensorManager, "Sensor Manager", "", "Поддерживает текущее состояние для датчиков в доме.")
+}
+
+ContainerDb(SensorDatabase, "Sensor Database", "MongoDB", "Хранит текущее состояние датчиков")
+ContainerQueue(SensorDataQueue, "Sensor Data Queue", "Kafka", "Содержит <<сырые>> события с датчиков")
+
+Rel_D(ApiGateway, Api, "Отправляет события с датчиков\nПолучает текущее состояние устройств", "HTTPS/JSON")
+Rel_D(Api, SensorManager, "Запрашивает текущее состояние датчиков\n Изменяет состояния датчиков")
+
+Rel_D(SensorManager, SensorDatabase, "Получает и обновляет текущее состояние датчиков", "JDBC")
+Rel_D(SensorManager, SensorDataQueue, "Публикует события о новых показаниях датчиков", "Kafka")
+
+@enduml
