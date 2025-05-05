@@ -1,0 +1,482 @@
+openapi: 3.0.0
+info:
+  title: house-service-api
+  version: 0.1.0
+  description: API для сервиса HouseService
+
+tags:
+  - name: house
+    description: API управления умным домом
+  - name: sensor
+    description: API управления датчиками
+  - name: device
+    description: API управления устройствами
+
+paths:
+  /sensor:
+    post:
+      tags:
+        - sensor
+      summary: Подключить новый датчик к дому
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddSensorRequest'
+            example:
+              AddSensorRequest:
+                house_id: 123
+                sensor_type: 'temperature_sensor'
+                serial_number: 'TS826957629'
+        required: true
+      responses:
+        '201':
+          description: Успешно добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorInfo'
+        '400':
+          description: Некорректные данные
+        '404':
+          description: Дом, к которому подключается датчик, не найден
+        '409':
+          description: Датчик с таким серийным номером уже подключен
+
+  /sensor/{sensor_id}:
+    get:
+      tags:
+        - sensor
+      summary: Получить информацию по датчику в доме
+      parameters:
+        - name: sensor_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/SensorId'
+          example: 111
+      responses:
+        '200':
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorInfo'
+        '404':
+          description: Датчик с указанным ID не найден
+    delete:
+      tags:
+        - sensor
+      summary: Отключить датчик от дома
+      parameters:
+        - name: sensor_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/SensorId'
+      responses:
+        '200':
+          description: Успешно удален
+        '404':
+          description: Датчик с указанным ID не найден
+
+  /sensor/{sensor_id}/on:
+    post:
+      tags:
+        - sensor
+      summary: Включить датчик
+      parameters:
+        - name: sensor_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/SensorId'
+      responses:
+        '200':
+          description: Датчик уже был включен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorInfo'
+        '201':
+          description: Датчик успешно включен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorInfo'
+        '404':
+          description: Датчик с указанным ID не найден
+
+  /sensor/{sensor_id}/off:
+    post:
+      tags:
+        - sensor
+      summary: Выключить датчик
+      parameters:
+        - name: sensor_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/SensorId'
+      responses:
+        '200':
+          description: Датчик уже был выключен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorInfo'
+              example:
+                SensorInfo:
+                  sensor_id: 111
+                  house_id: 123
+                  sensor_type: 'temperature_sensor'
+                  serial_number: 'TS826957629'
+                  status: false
+                  connected_at: '2025-05-05 10:00:05 +0300'
+        '201':
+          description: Датчик успешно выключен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorInfo'
+              example:
+                SensorInfo:
+                  sensor_id: 111
+                  house_id: 123
+                  sensor_type: 'temperature_sensor'
+                  serial_number: 'TS826957629'
+                  status: false
+                  connected_at: '2025-05-05 10:00:05 +0300'
+        '404':
+          description: Датчик с указанным ID не найден
+
+  /device:
+    post:
+      tags:
+        - device
+      summary: Подключить новое устройство к дому
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddDeviceRequest'
+        required: true
+      responses:
+        '201':
+          description: Успешно добавлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceInfo'
+        '400':
+          description: Некорректные данные
+        '404':
+          description: Дом, к которому подключается устройство, не найден
+        '409':
+          description: Устройство с таким серийным номером уже подключено
+
+  /device/{device_id}:
+    get:
+      tags:
+        - device
+      summary: Получить информацию по устройству в доме
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/DeviceId'
+      responses:
+        '200':
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceInfo'
+        '404':
+          description: Устройство с указанным ID не найдено
+    delete:
+      tags:
+        - device
+      summary: Отключить устройство от дома
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/DeviceId'
+      responses:
+        '200':
+          description: Успешно удалено
+        '404':
+          description: Устройство с указанным ID не найдено
+
+  /device/{device_id}/on:
+    post:
+      tags:
+        - device
+      summary: Включить устройство
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/DeviceId'
+      responses:
+        '200':
+          description: Устройство уже было включено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceInfo'
+        '201':
+          description: Устройство успешно включено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceInfo'
+        '404':
+          description: Устройство с указанным ID не найдено
+
+  /device/{device_id}/off:
+    post:
+      tags:
+        - device
+      summary: Выключить устройство
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/DeviceId'
+      responses:
+        '200':
+          description: Устройство уже было выключено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceInfo'
+              example:
+                DeviceInfo:
+                  device_id: 222
+                  house_id: 123
+                  device_type: 'relay'
+                  serial_number: 'TS826957629'
+                  status: false
+                  connected_at: '2025-05-05 10:00:05 +0300'
+        '201':
+          description: Устройство успешно выключено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceInfo'
+              example:
+                DeviceInfo:
+                  device_id: 222
+                  house_id: 123
+                  device_type: 'relay'
+                  serial_number: 'TS826957629'
+                  status: false
+                  connected_at: '2025-05-05 10:00:05 +0300'
+        '404':
+          description: Устройство с указанным ID не найдено
+
+  /house:
+    post:
+      tags:
+        - house
+      summary: Подключить новый умный дом к системе
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddHouseRequest'
+        required: true
+      responses:
+        '200':
+          description: Дом уже подключен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HouseInfo'
+        '201':
+          description: Успешно добавлен
+        '400':
+          description: Некорректные данные
+        '409':
+          description: Дом по такому адресу уже подключен другим пользователем
+
+  /house/{house_id}:
+    get:
+      tags:
+        - house
+      summary: Получить полную информацию об умном доме
+      parameters:
+        - name: house_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/HouseId'
+      responses:
+        '200':
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HouseFullInfo'
+        '404':
+          description: Умный дом с указанным ID не найден
+
+components:
+  schemas:
+    AddSensorRequest:
+      type: object
+      description: Запрос на подключение нового датчика к умному дому
+      properties:
+        house_id:
+          $ref: '#/components/schemas/HouseId'
+        sensor_type:
+          $ref: '#/components/schemas/SensorType'
+        serial_number:
+          $ref: '#/components/schemas/SerialNumber'
+
+    AddDeviceRequest:
+      type: object
+      description: Запрос на подключение нового устройства к умному дому
+      properties:
+        house_id:
+          $ref: '#/components/schemas/HouseId'
+        device_type:
+          $ref: '#/components/schemas/DeviceType'
+        serial_number:
+          $ref: '#/components/schemas/SerialNumber'
+
+    AddHouseRequest:
+      type: object
+      description: Запрос на добавление нового умного дома
+      properties:
+        user_id:
+          $ref: '#/components/schemas/UserId'
+        address:
+          $ref: '#/components/schemas/Address'
+
+    SensorInfo:
+      type: object
+      description: Информация о датчике
+      properties:
+        sensor_id:
+          $ref: '#/components/schemas/SensorId'
+        house_id:
+          $ref: '#/components/schemas/HouseId'
+        sensor_type:
+          $ref: '#/components/schemas/SensorType'
+        serial_number:
+          $ref: '#/components/schemas/SerialNumber'
+        status:
+          $ref: '#/components/schemas/SensorStatus'
+        connected_at:
+          $ref: '#/components/schemas/ConnectedAt'
+
+    DeviceInfo:
+      type: object
+      description: Информация об устройстве
+      properties:
+        device_id:
+          $ref: '#/components/schemas/DeviceId'
+        house_id:
+          $ref: '#/components/schemas/HouseId'
+        device_type:
+          $ref: '#/components/schemas/DeviceType'
+        serial_number:
+          $ref: '#/components/schemas/SerialNumber'
+        status:
+          $ref: '#/components/schemas/DeviceStatus'
+        connected_at:
+          $ref: '#/components/schemas/ConnectedAt'
+
+    HouseInfo:
+      type: object
+      description: Основная информация об умном доме
+      properties:
+        house_id:
+          $ref: '#/components/schemas/HouseId'
+        address:
+          $ref: '#/components/schemas/Address'
+
+    HouseFullInfo:
+      type: object
+      description: Полная информация об умном доме, его датчиках и устройствах
+      properties:
+        house_id:
+          $ref: '#/components/schemas/HouseId'
+        address:
+          $ref: '#/components/schemas/Address'
+        sensors:
+          type: array
+          items:
+            $ref: '#/components/schemas/SensorInfo'
+        devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviceInfo'
+
+    SensorId:
+      type: integer
+      format: int64
+      description: ID датчика
+      example: 111
+
+    DeviceId:
+      type: integer
+      format: int64
+      description: ID устройства
+      example: 222
+
+    HouseId:
+      type: integer
+      format: int64
+      description: ID умного дома
+      example: 123
+
+    UserId:
+      type: integer
+      format: int64
+      description: ID пользователя системы
+      example: 100
+
+    SensorType:
+      type: string
+      description: Тип датчика
+      example: 'temperature_sensor'
+
+    DeviceType:
+      type: string
+      description: Тип устройства
+      example: 'relay'
+    
+    SerialNumber:
+      type: string
+      description: Серийный номер устройства
+      example: 'TS826957629'
+
+    SensorStatus:
+      type: boolean
+      description: Состояние датчика (вкл/выкл)
+      example: true
+
+    DeviceStatus:
+      type: boolean
+      description: Состояние устройства (вкл/выкл)
+      example: true
+
+    ConnectedAt:
+      type: string
+      format: datetime
+      description: Дата подключения устройства
+      example: '2025-05-05 10:00:05 +0300'
+
+    Address:
+      type: string
+      format: address
+      description: Адрес умного дома
+      example: 'г. Ленинград, ул. Ленина, д. 1'
