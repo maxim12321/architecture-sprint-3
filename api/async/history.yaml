@@ -1,0 +1,95 @@
+asyncapi: "3.0.0"
+
+info: 
+  title: History Service AsyncAPI
+  version: 0.1.0
+  description: Асинхронное API для сервиса History Service, который сохраняет в базе все события с датчиками и устройствами, происходящие в системе.
+
+channels: 
+  sensorData:
+    address: sensor.data
+    title: Канал с данными от датчиков
+    messages:
+      sensorDataUpdated:
+        $ref: '#/components/messages/SensorDataUpdatedMessage'
+
+  deviceState:
+    address: device.state
+    title: Канал с данными о состоянии устройств
+    messages:
+      deviceStateUpdated:
+        $ref: '#/components/messages/DeviceStateUpdatedMessage'
+
+operations: 
+  receiveOnSensorDataUpdated:
+    title: Получение сообщения с данными датчика
+    channel:
+      $ref: '#/channels/sensorData'
+    action: receive
+  receiveOnDeviceStateUpdated:
+    title: Получение изменения состояния устройства
+    channel:
+      $ref: '#/channels/deviceState'
+    action: receive
+
+components:
+  messages:
+    SensorDataUpdatedMessage:
+      summary: Сообщение с данными от датчиков
+      description: Сообщение содержит информацию о текущем состоянии датчика, а также временную метку, когда это состояние было получено.
+      payload:
+        type: object
+        properties: 
+          sensor_id:
+            $ref: '#/components/schemas/SensorId'
+          data:
+            $ref: '#/components/schemas/SensorData'
+          timestamp:
+            $ref: '#/components/schemas/Timestamp'
+
+    DeviceStateUpdatedMessage:
+      summary: Сообщение об изменении состояния устройства
+      description: Сообщение содержит новое состояние устройства умного дома, причину изменения состояния, а также временную метку этого изменения.
+      payload:
+        type: object
+        properties: 
+          device_id:
+            $ref: '#/components/schemas/DeviceId'
+          state:
+            $ref: '#/components/schemas/DeviceState'
+          update_reason:
+            $ref: '#/components/schemas/DeviceUpdateReason'
+          timestamp:
+            $ref: '#/components/schemas/Timestamp'
+
+  schemas:
+    SensorId:
+      type: integer
+      format: int64
+      description: ID датчика
+      example: 111
+
+    DeviceId:
+      type: integer
+      format: int64
+      description: ID устройства
+      example: 222
+
+    Timestamp:
+      type: string
+      format: datetime
+      description: Дата события
+      example: '2025-05-05 10:00:05 +0300'
+
+    SensorData: 
+      description: JSON с данными от датчика
+      example: "{ 'temperature': '23.5' }"
+
+    DeviceState:
+      description: JSON с состоянием устройства умного дома
+      example: "{ 'state': 'on', 'direction': 'left' }"
+
+    DeviceUpdateReason:
+      type: string
+      description: Причина обновления состояния устройства (ручное изменение пользователем, изменение в результате срабатывания триггера и т.д.)
+      example: "triggered"

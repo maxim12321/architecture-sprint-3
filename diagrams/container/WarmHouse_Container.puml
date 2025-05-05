@@ -1,0 +1,73 @@
+@startuml WarmHouse_Container
+title WarmHouse Container Diagram
+
+!include ../c4-template/C4_Container.puml
+
+Person(user, "Пользователь", "Пользователь системы <<Тёплый Дом>>")
+Person(admin, "Администратор", "Сотрудник из команды по обслуживанию клиентов, предоставляющий поддержку пользователям")
+
+System_Boundary(WarmHouseSystem, "FitLife System") {
+  Container(WebApp, "Web Application", "Java, Spring", "Веб-интерфейс для просмотра состояния датчиков и устройств в доме, программирования системы умного дома")
+  Container(ApiGateway, "API Gateway", "Java, Spring", "Занимается авторизацией пользователей, обрабатывает входящие API-запросы")
+  Container(SensorService, "Sensor Service", "Java, Spring", "Обрабатывает добавление новых датчиков и поступающие с этих датчиков события")
+  Container(TriggerService, "Trigger Service", "Java, Spring", "Обрабатывает добавление новых триггеров (их программирование), отвечает за их срабатывание")
+  Container(HouseService, "House Service", "Java, Spring", "Управляет умным домом, подключает к нему датчики и устройства")
+  Container(DeviceService, "Device Service", "Java, Spring", "Обрабатывает добавление новых устройств, управляет их состоянием. Обрабатывает асинхронные запросы <<о необходимости изменить состояние>>, изменяя состояние устройства")
+  Container(HistoryService, "History Service", "Java, Spring", "Сохраняет всю историю изменения состояний датчиков и устройств")
+  ContainerDb(SensorDatabase, "Sensor Database", "MongoDB", "Хранит текущее состояние датчиков")
+  ContainerDb(DeviceDatabase, "Device Database", "MongoDB", "Хранит текущее состояние умных устройств")
+  ContainerDb(TriggerDatabase, "Trigger Database", "MongoDB", "Хранит созданные пользователем триггеры")
+  ContainerDb(MainDatabase, "Main Database", "PostgreSQL", "Хранит информацию об умных домах пользователей, а также список подключенных к ним датчиков, устройств и настроенных триггеров")
+  ContainerDb(HistoryDatabase, "History Database", "MongoDB", "Хранит события об изменении состояния датчиков и умных устройств")
+  ContainerQueue(SensorDataQueue, "Sensor Data Queue", "Kafka", "Содержит <<сырые>> события с датчиков")
+  ContainerQueue(DeviceStateQueue, "Device State Queue", "Kafka", "Содержит события об изменении состояния умных устройств")
+}
+
+System_Ext(sensors, "Датчики", "Датчики для наблюдения за состоянием дома (температура, влажность, освещенность, ...)")
+System_Ext(devices, "Устройства умного дома", "Устройства, позволяющие управлять умным домом (реле, камеры, техника, ...)")
+
+Rel(user, WebApp, "Подключает датчики и устройства,\nНаблюдает за состоянием,\nПрограммирует систему.")
+Rel(admin, WebApp, "Управляет системой")
+
+Rel_D(WebApp, ApiGateway, "Отправляет API-запросы через")
+
+Rel_D(ApiGateway, SensorService, "Отправляет данные с датчиков\nПолучает текущее состояние датчиков")
+Rel_D(ApiGateway, DeviceService, "Отправляет события с устройств\nПолучает текущее состояние устройств")
+Rel_D(ApiGateway, HouseService, "Сообщает о подключении новых устройств/датчиков/триггеров\nПолучает информацию о состоянии дома")
+Rel_D(ApiGateway, HistoryService, "Получает журнал состояний датчиков и устройств")
+
+Lay_D(ApiGateway, HouseService)
+Lay_D(HouseService, TriggerService)
+Lay_R(SensorService, MainDatabase)
+Lay_R(HouseService, DeviceService)
+' Lay_R(SensorDatabase, SensorDataQueue)
+Lay_R(SensorDataQueue, TriggerDatabase)
+Lay_R(TriggerDatabase, DeviceStateQueue)
+' Lay_R(TriggerDatabase, DeviceStateQueue)
+' Lay_R(DeviceStateQueue, DeviceDatabase)
+Lay_D(TriggerDatabase, HistoryService)
+
+Rel_L(HouseService, MainDatabase, "Сохраняет данные в")
+Rel_D(HouseService, TriggerService, "Настраивает новые триггеры")
+' Rel_D(HouseService, SensorService, "Регистрирует новые датчики")
+' Rel_D(HouseService, DeviceService, "Регистрирует новые устройства")
+
+Rel_D(SensorService, SensorDatabase, "Сохраняет данные в")
+Rel(SensorService, SensorDataQueue, "Отправляет события об изменении состояния датчика в")
+
+Rel_D(DeviceService, DeviceDatabase, "Сохраняет данные в")
+Rel(DeviceService, DeviceStateQueue, "Отправляет события о необходимости изменения состояния устройств\nОбрабатывает эти события и изменяет состояние устройств")
+
+Rel_D(TriggerService, TriggerDatabase, "Сохраняет данные в")
+Rel(TriggerService, SensorDataQueue, "Следит за обновлениями показаний датчиков")
+Rel(TriggerService, DeviceStateQueue, "Отправляет события о необходимости изменения состояния устройств")
+
+Rel_U(HistoryService, SensorDataQueue, "Получает все события из")
+Rel_U(HistoryService, DeviceStateQueue, "Получает все события из")
+Rel_L(HistoryService, HistoryDatabase, "Сохраняет данные в")
+
+Rel_L(sensors, ApiGateway, "Отправляют текущее состояние датчика")
+Rel_L(devices, ApiGateway, "Отправляют ручное изменение состояния устройства")
+Rel_R(DeviceService, devices, "Изменяет состояние")
+
+@enduml

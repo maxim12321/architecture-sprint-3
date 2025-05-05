@@ -1,0 +1,89 @@
+@startuml DeviceService_Code
+title Device Service Code Diagram
+
+' Container(ApiGateway, "API Gateway", "Java, Spring", "Занимается авторизацией пользователей, обрабатывает входящие API-запросы")
+
+' Container_Boundary(DeviceServiceContainer, "Device Service") {
+'   Component(Api, "API", "", "Обрабатывает входящие запросы о ручном изменении состояния устройств. Возвращает текущее состояние устройств.")
+'   Component(StateUpdater, "State Updater", "", "Обрабатывает события из очереди о необходимости изменить состояние устройства, выполняя запрос в соответствующее устройство умного дома.")
+'   Component(DeviceManager, "Device Manager", "", "Поддерживает текущее состояние для умных устройств из входящих запросов и событий в очереди.")
+' }
+
+' System_Ext(devices, "Устройства умного дома", "Устройства, позволяющие управлять умным домом (реле, камеры, техника, ...)")
+' ContainerDb(DeviceDatabase, "Device Database", "MongoDB", "Хранит текущее состояние умных устройств")
+' ContainerQueue(DeviceStateQueue, "Device State Queue", "Kafka", "Содержит события об изменении состояния умных устройств")
+
+' Rel_D(ApiGateway, Api, "Отправляет события с устройств\nПолучает текущее состояние устройств", "HTTPS/JSON")
+' Rel_D(Api, DeviceManager, "Запрашивает текущее состояние устройств\n Изменяет состояния устройств")
+
+' Rel_R(StateUpdater, devices, "Отправляет запросы изменения состояния", "HTTPS/JSON")
+' Rel_D(StateUpdater, DeviceStateQueue, "Обрабатывает сообщения о необходимости изменить состояние устройства", "Kafka")
+
+' Rel_D(DeviceManager, DeviceDatabase, "Получает и обновляет текущее состояние устройства", "JDBC")
+' Rel_D(DeviceManager, DeviceStateQueue, "Публикует события об изменении состояния устройства", "Kafka")
+
+class DeviceStateController {
+    -DeviceManagerService deviceManagerService
+    +void updateState(DeviceStateUpdateEvent request)
+    +DeviceState getCurrentState(Long deviceId)
+}
+
+class DeviceApiClient {
+    +void updateState(Long deviceId, DeviceState targetState)
+}
+
+class DeviceManagerService {
+    -DeviceStateRepository deviceStateRepository
+    -DeviceStateQueueClient deviceStateQueueClient
+    +void setState(Long deviceId, DeviceState deviceState)
+    +DeviceState getCurrentState(Long deviceId)
+}
+
+class StateUpdaterService {
+    -DeviceStateQueueClient deviceStateQueueClient
+    +hanleUpdateRequest(DeviceUpdateRequestEvent request)
+}
+
+class DeviceStateQueueClient {
+    +void publish(DeviceStateUpdateEvent updateEvent)
+}
+
+class DeviceStateRepository {
+    +DeviceState getCurrentState(Long deviceId)
+    +void setState(DeviceState targetState)
+}
+
+class DeviceUpdateRequestEvent {
+    -DeviceState targetState
+    -Timestamp timestamp
+}
+
+class DeviceStateUpdateEvent {
+    -DeviceState targetState
+    -UpdaterType updater
+}
+
+class DeviceState {
+    -Long deviceId
+    -Json state
+    -Timestamp updatedAt
+}
+
+enum UpdaterType {
+    + USER
+    + TRIGGER
+}
+
+DeviceStateController "1" --> "1" DeviceManagerService : includes
+
+DeviceManagerService "1" --> "1" DeviceStateRepository : includes
+
+DeviceManagerService "1" --> "1" DeviceStateQueueClient : includes
+StateUpdaterService "1" --> "1" DeviceStateQueueClient : includes
+StateUpdaterService "1" --> "1" DeviceApiClient : includes
+
+DeviceUpdateRequestEvent "1" --> "1" DeviceState : includes
+DeviceStateUpdateEvent "1" --> "1" DeviceState : includes
+DeviceStateUpdateEvent "1" --> "1" UpdaterType : includes
+
+@enduml

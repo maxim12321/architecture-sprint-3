@@ -1,0 +1,19 @@
+@startuml WarmHouse_Context
+title WarmHouse Context Diagram
+
+!include ../c4-template/C4_Context.puml
+
+Person(user, "Пользователь", "Пользователь системы <<Тёплый Дом>>")
+Person(admin, "Администратор", "Сотрудник из команды по обслуживанию клиентов, предоставляющий поддержку пользователям")
+
+System(WarmHouseSystem, "WarmHouse System", "Система управления устройствами умного дома")
+
+System_Ext(sensors, "Датчики", "Датчики для наблюдения за состоянием дома (температура, влажность, освещенность, ...)")
+System_Ext(devices, "Устройства умного дома", "Устройства, позволяющие управлять умным домом (реле, камеры, техника, ...)")
+
+Rel(user, WarmHouseSystem, "Подключает датчики и устройства,\nНаблюдает за состоянием,\nПрограммирует систему.")
+Rel(admin, WarmHouseSystem, "Управляет системой")
+Rel(WarmHouseSystem, sensors, "Собирает и обрабатывает данные")
+Rel(WarmHouseSystem, devices, "Получает и изменяет состояние")
+
+@enduml

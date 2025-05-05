@@ -1,0 +1,24 @@
+@startuml TriggerService_Component
+title Trigger Service Component Diagram
+
+!include ../c4-template/C4_Component.puml
+
+Container(HouseService, "House Service", "Java, Spring", "Управляет умным домом, подключает к нему датчики и устройства")
+
+Container_Boundary(TriggerServiceContainer, "Trigger Service") {
+    Component(TriggerManager, "Trigger Manager", "", "Создает новые триггеры, настраивает условия их срабатывания и действия после активации.")
+    Component(TriggerStatusUpdater, "Trigger Status Updater", "", "Проверяет условия срабатывания триггеров при обновлении состояний датчиков. В случае, если все условия выполнены, отправляет событие о необходимости изменить состояние соответствующих устройств.")
+}
+
+ContainerDb(TriggerDatabase, "Trigger Database", "MongoDB", "Хранит созданные пользователем триггеры: условия их срабатывания и действия с устройствами, которые необходимо выполнить при активации триггера.")
+ContainerQueue(SensorDataQueue, "Sensor Data Queue", "Kafka", "Содержит <<сырые>> события с датчиков")
+ContainerQueue(DeviceStateQueue, "Device State Queue", "Kafka", "Содержит события об изменении состояния умных устройств")
+
+Rel_D(HouseService, TriggerManager, "Настраивает новые триггеры, возвращает данные о существующих", "gRPC")
+
+Rel_D(TriggerManager, TriggerDatabase, "Получает и сохраняет данные о триггерах в", "JDBC")
+Rel(TriggerStatusUpdater, TriggerDatabase, "Получает список условий для срабатывания триггеров", "JDBC")
+Rel(TriggerStatusUpdater, SensorDataQueue, "Следит за обновлениями показаний датчиков, подписываясь на сообщения из очереди", "Kafka")
+Rel(TriggerStatusUpdater, DeviceStateQueue, "Отправляет события о необходимости изменения состояния устройств", "Kafka")
+
+@enduml

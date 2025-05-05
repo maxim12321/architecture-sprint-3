@@ -1,0 +1,107 @@
+@startuml MainDatabase_ER
+title Main Database Entity-Relationship Diagram
+
+entity User {
+    *user_id : number <<generated>>
+    --
+    *name : text
+    *email: text
+    phone_number: text
+}
+
+entity House {
+    *house_id : number <<generated>>
+    --
+    *user_id : number <<FK>>
+    *address: text
+}
+
+entity Sensor {
+    *sensor_id : number <<generated>>
+    --
+    *house_id : number <<FK>>
+    *sensor_type_id : number <<FK>>
+    *serial_number : text
+    *status : boolean
+    *connected_at : timestamp
+}
+
+entity SensorType {
+    *sensor_type_id : number <<generated>>
+    --
+    *sensor_type_name : text
+}
+
+entity SensorData {
+    --
+    *sensor_id : number <<FK>>
+    *data : json
+    *created_at : timestamp
+}
+
+entity Device {
+    *device_id : number <<generated>>
+    --
+    *house_id : number <<FK>>
+    *device_type_id : number <<FK>>
+    *serial_number : text
+    *status : boolean
+    *connected_at : timestamp
+}
+
+entity DeviceType {
+    *device_type_id : number <<generated>>
+    --
+    *device_type_name : text
+}
+
+entity DeviceState {
+    --
+    *device_id : number <<FK>>
+    *state : json
+    *updated_at : timestamp
+}
+
+entity Trigger {
+    *trigger_id : number <<generated>>
+    --
+    *house_id : number <<FK>>
+    *status : boolean
+    *created_at : timestamp
+}
+
+entity TriggerCondition {
+    *condition_id : number <<generated>>
+    --
+    *trigger_id : number <<FK>>
+    *sensor_id : number <<FK>>
+    *sensor_condition_data : json
+}
+
+entity TriggerAction {
+    *action_id : number <<generated>>
+    --
+    *trigger_id : number <<FK>>
+    *device_id : number <<FK>>
+    *device_target_state : json
+}
+
+User ||--|{ House
+
+House ||--o{ Sensor
+House ||--o{ Device
+House ||--o{ Trigger
+
+SensorType ||--o{ Sensor
+DeviceType ||--o{ Device
+
+Sensor ||--o{ SensorData
+Device ||--|{ DeviceState
+
+Trigger ||--|{ TriggerCondition
+Sensor ||--o{ TriggerCondition
+
+Trigger ||--|{ TriggerAction
+Device ||--o{ TriggerAction
+
+@enduml
